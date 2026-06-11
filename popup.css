@@ -1,0 +1,113 @@
+:root {
+  color-scheme: light;
+  --background: #f7f3ea;
+  --surface: #fffaf0;
+  --text: #1e2a24;
+  --muted: #66756d;
+  --border: #decfb9;
+  --accent: #2f6f5e;
+  --accent-hover: #245647;
+  --focus: #d99145;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  margin: 0;
+  background: linear-gradient(145deg, var(--background), #efe5d0);
+  color: var(--text);
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.popup {
+  padding: 18px;
+}
+
+.popup__header {
+  margin-bottom: 16px;
+}
+
+h1 {
+  margin: 0 0 6px;
+  font-size: 1.35rem;
+  line-height: 1.2;
+}
+
+p {
+  margin: 0;
+}
+
+.popup__header p {
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.settings {
+  display: grid;
+  gap: 14px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+textarea,
+select {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 112px;
+  padding: 10px;
+  line-height: 1.4;
+}
+
+select {
+  padding: 9px 10px;
+}
+
+textarea:focus,
+select:focus,
+button:focus {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+button {
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 16px;
+  background: var(--accent);
+  color: #ffffff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+button:hover {
+  background: var(--accent-hover);
+}
+
+.status {
+  min-height: 1.2em;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.status--error {
+  color: #8f2f24;
+}

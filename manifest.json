@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "Personal Text Typer",
+  "version": "0.1.0",
+  "description": "A visible, user-initiated personal productivity helper for saving text insertion settings.",
+  "permissions": [
+    "storage"
+  ],
+  "action": {
+    "default_title": "Personal Text Typer",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

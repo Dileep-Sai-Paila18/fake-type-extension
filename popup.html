@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Personal Text Typer</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <main class="popup">
+      <header class="popup__header">
+        <h1>Personal Text Typer</h1>
+        <p>Save text and a typing speed for later user-initiated insertion.</p>
+      </header>
+
+      <form id="settingsForm" class="settings">
+        <label class="field" for="textToInsert">
+          <span>Text to insert</span>
+          <textarea id="textToInsert" name="textToInsert" rows="6" placeholder="Enter text you want to insert later"></textarea>
+        </label>
+
+        <label class="field" for="speed">
+          <span>Speed</span>
+          <select id="speed" name="speed">
+            <option value="slow">Slow</option>
+            <option value="medium">Medium</option>
+            <option value="fast">Fast</option>
+          </select>
+        </label>
+
+        <button type="submit">Save</button>
+      </form>
+
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+    </main>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
