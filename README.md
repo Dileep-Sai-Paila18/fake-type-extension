@@ -23,3 +23,12 @@ This extension is intended as a personal productivity helper. It does not hide i
 - Settings saved to `chrome.storage.local`.
 - Placeholder background service worker.
 - Placeholder content script loaded on normal `http` and `https` pages.
+
+## Checkpoint 2
+
+- Tracks the last user-focused editable target in the content script.
+- Supports text inputs, textareas, and contenteditable elements.
+- Ignores password, hidden, disabled, readonly, and non-editable targets.
+- Adds a Check Target button in the popup.
+- Reports whether the last focused target is ready without typing or filling anything.
+ 
