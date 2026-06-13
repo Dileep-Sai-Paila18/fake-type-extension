@@ -36,6 +36,11 @@ h1 {
   line-height: 1.2;
 }
 
+h2 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
 p {
   margin: 0;
 }
@@ -123,6 +128,34 @@ button:hover {
 
 .button--danger:hover {
   background: #6f241b;
+}
+
+.shortcuts {
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(255, 250, 240, 0.72);
+}
+
+.shortcuts p {
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+kbd {
+  display: inline-block;
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  padding: 1px 5px;
+  background: var(--surface);
+  color: var(--text);
+  font-family: "Courier New", monospace;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-align: center;
 }
 
 .status {

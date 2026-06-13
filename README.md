@@ -12,6 +12,8 @@ Typing behavior is user-initiated from the popup and can be stopped by the user.
 4. Choose this project folder.
 5. Open the extension popup from the Chrome toolbar.
 
+Chrome lets users review or change extension shortcuts at `chrome://extensions/shortcuts`.
+
 ## Safety Notes
 
 This extension is intended as a personal productivity helper. It does not hide its activity, make network calls, collect page data, or bypass workplace auditing, monitoring, bot detection, CAPTCHAs, or other controls.
@@ -40,3 +42,13 @@ This extension is intended as a personal productivity helper. It does not hide i
 - Uses deterministic delays: Slow around 120ms, Medium around 60ms, Fast around 25ms.
 - Dispatches input events so web apps can notice visible value changes.
 - Cancels an active insertion when the user clicks Stop.
+
+## Checkpoint 4
+
+- Adds keyboard commands for user-initiated start and stop.
+- Start shortcut on Mac: `Command+Shift+Y`.
+- Stop shortcut on Mac: `Command+Shift+U`.
+- Start shortcut on other platforms: `Alt+Shift+Y`.
+- Stop shortcut on other platforms: `Alt+Shift+U`.
+- Background service worker handles shortcut commands by messaging the active tab.
+- Popup buttons continue to use the same insertion messages.
