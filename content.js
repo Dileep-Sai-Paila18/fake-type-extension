@@ -324,7 +324,7 @@
     if (typeof text !== "string" || text.length === 0) {
       return {
         ok: false,
-        error: "No saved text found. Enter text and click Save first."
+        error: "No template text found. Select a template with text first."
       };
     }
 

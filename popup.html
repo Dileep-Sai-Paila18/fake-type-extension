@@ -14,10 +14,29 @@
       </header>
 
       <form id="settingsForm" class="settings">
-        <label class="field" for="textToInsert">
-          <span>Text to insert</span>
-          <textarea id="textToInsert" name="textToInsert" rows="6" placeholder="Enter text you want to insert later"></textarea>
+        <label class="field" for="templateSelect">
+          <span>Template</span>
+          <select id="templateSelect" name="templateSelect"></select>
         </label>
+
+        <label class="field" for="templateName">
+          <span>Template name</span>
+          <input id="templateName" name="templateName" type="text" maxlength="80" placeholder="Example: Follow-up reply">
+        </label>
+
+        <label class="field" for="templateText">
+          <span>Template text</span>
+          <textarea id="templateText" name="templateText" rows="6" placeholder="Enter reusable text for the selected template"></textarea>
+        </label>
+
+        <p id="templateMeta" class="meta"></p>
+
+        <div class="actions">
+          <button id="createTemplateButton" type="button">Create New</button>
+          <button id="renameTemplateButton" class="button--secondary" type="button">Rename</button>
+          <button id="updateTemplateButton" class="button--secondary" type="button">Update Text</button>
+          <button id="deleteTemplateButton" class="button--danger" type="button">Delete</button>
+        </div>
 
         <label class="field" for="speed">
           <span>Speed</span>
@@ -29,7 +48,7 @@
         </label>
 
         <div class="actions">
-          <button type="submit">Save</button>
+          <button type="submit">Save Changes</button>
           <button id="checkTargetButton" class="button--secondary" type="button">Check Target</button>
           <button id="startButton" type="button">Start</button>
           <button id="stopButton" class="button--danger" type="button">Stop</button>

@@ -14,6 +14,15 @@ Typing behavior is user-initiated from the popup and can be stopped by the user.
 
 Chrome lets users review or change extension shortcuts at `chrome://extensions/shortcuts`.
 
+## Use Templates
+
+1. Open the popup.
+2. Enter a template name and reusable text.
+3. Click Create New to save it.
+4. Use the Template dropdown to select saved text.
+5. Use Rename, Update Text, or Delete to manage the selected template.
+6. Click into a page text field, then click Start or use the start shortcut.
+
 ## Safety Notes
 
 This extension is intended as a personal productivity helper. It does not hide its activity, make network calls, collect page data, or bypass workplace auditing, monitoring, bot detection, CAPTCHAs, or other controls.
@@ -52,3 +61,12 @@ This extension is intended as a personal productivity helper. It does not hide i
 - Stop shortcut on other platforms: `Alt+Shift+U`.
 - Background service worker handles shortcut commands by messaging the active tab.
 - Popup buttons continue to use the same insertion messages.
+
+## Checkpoint 5
+
+- Adds saved templates in `chrome.storage.local`.
+- Each template stores a name, text, created timestamp, and updated timestamp.
+- Supports creating, selecting, renaming, updating, and deleting templates.
+- Keeps the selected template saved between popup sessions.
+- Limits templates to 20 and text length to the configured maximum, defaulting to 5000 characters.
+- Start inserts the selected template text only.

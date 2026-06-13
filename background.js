@@ -1,11 +1,19 @@
+const DEFAULT_OPTIONS = {
+  maxTextLength: 5000
+};
+
 const STORAGE_KEYS = {
-  text: "textToInsert",
-  speed: "speed"
+  options: "options",
+  selectedTemplateId: "selectedTemplateId",
+  speed: "speed",
+  templates: "templates"
 };
 
 const DEFAULT_SETTINGS = {
-  [STORAGE_KEYS.text]: "",
-  [STORAGE_KEYS.speed]: "medium"
+  [STORAGE_KEYS.options]: DEFAULT_OPTIONS,
+  [STORAGE_KEYS.selectedTemplateId]: "",
+  [STORAGE_KEYS.speed]: "medium",
+  [STORAGE_KEYS.templates]: []
 };
 
 const COMMANDS = {
@@ -20,6 +28,27 @@ const MESSAGE_TYPES = {
 
 function getRuntimeError() {
   return chrome.runtime.lastError ? chrome.runtime.lastError.message : "";
+}
+
+function getMaxTextLength(options) {
+  const maxTextLength = Number(options && options.maxTextLength);
+
+  if (!Number.isInteger(maxTextLength) || maxTextLength < 1) {
+    return DEFAULT_OPTIONS.maxTextLength;
+  }
+
+  return maxTextLength;
+}
+
+function getSelectedTemplate(settings) {
+  const templates = Array.isArray(settings[STORAGE_KEYS.templates])
+    ? settings[STORAGE_KEYS.templates]
+    : [];
+  const selectedTemplateId = settings[STORAGE_KEYS.selectedTemplateId];
+
+  return templates.find((template) => {
+    return template && template.id === selectedTemplateId;
+  }) || null;
 }
 
 function sendMessageToTab(tab, message) {
@@ -50,13 +79,19 @@ function sendMessageToActiveTab(message, commandTab) {
 
 function startInsertionFromCommand(commandTab) {
   chrome.storage.local.get(DEFAULT_SETTINGS, (settings) => {
-    if (getRuntimeError() || !settings[STORAGE_KEYS.text]) {
+    if (getRuntimeError()) {
+      return;
+    }
+
+    const template = getSelectedTemplate(settings);
+
+    if (!template || typeof template.text !== "string" || !template.text) {
       return;
     }
 
     sendMessageToActiveTab({
       type: MESSAGE_TYPES.startInsertion,
-      text: settings[STORAGE_KEYS.text],
+      text: template.text.slice(0, getMaxTextLength(settings[STORAGE_KEYS.options])),
       speed: settings[STORAGE_KEYS.speed]
     }, commandTab);
   });

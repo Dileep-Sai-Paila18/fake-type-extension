@@ -63,6 +63,7 @@ p {
   font-weight: 700;
 }
 
+input,
 textarea,
 select {
   width: 100%;
@@ -71,6 +72,10 @@ select {
   background: var(--surface);
   color: var(--text);
   font: inherit;
+}
+
+input {
+  padding: 9px 10px;
 }
 
 textarea {
@@ -84,6 +89,7 @@ select {
   padding: 9px 10px;
 }
 
+input:focus,
 textarea:focus,
 select:focus,
 button:focus {
@@ -112,6 +118,11 @@ button:hover {
   background: var(--accent-hover);
 }
 
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .button--secondary {
   border: 1px solid var(--border);
   background: var(--surface);
@@ -128,6 +139,12 @@ button:hover {
 
 .button--danger:hover {
   background: #6f241b;
+}
+
+.meta {
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.4;
 }
 
 .shortcuts {
