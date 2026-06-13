@@ -1,8 +1,8 @@
 # Personal Text Typer
 
-Personal Text Typer is a visible, user-initiated Chrome extension for saving text insertion settings. This checkpoint provides the Manifest V3 scaffold and a popup that stores text and speed preferences locally.
+Personal Text Typer is a visible, user-initiated Chrome extension for saving text insertion settings and inserting saved text into a user-focused editable field.
 
-No typing behavior is implemented yet.
+Typing behavior is user-initiated from the popup and can be stopped by the user.
 
 ## Load the Extension
 
@@ -31,4 +31,12 @@ This extension is intended as a personal productivity helper. It does not hide i
 - Ignores password, hidden, disabled, readonly, and non-editable targets.
 - Adds a Check Target button in the popup.
 - Reports whether the last focused target is ready without typing or filling anything.
- 
+
+## Checkpoint 3
+
+- Adds Start and Stop buttons in the popup.
+- Starts insertion only after the user clicks Start.
+- Inserts saved text into the last focused editable target one character at a time.
+- Uses deterministic delays: Slow around 120ms, Medium around 60ms, Fast around 25ms.
+- Dispatches input events so web apps can notice visible value changes.
+- Cancels an active insertion when the user clicks Stop.

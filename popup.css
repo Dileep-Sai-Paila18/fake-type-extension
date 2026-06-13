@@ -117,6 +117,14 @@ button:hover {
   background: #f1e6d2;
 }
 
+.button--danger {
+  background: #8f2f24;
+}
+
+.button--danger:hover {
+  background: #6f241b;
+}
+
 .status {
   min-height: 1.2em;
   margin-top: 12px;
