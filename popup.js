@@ -3,12 +3,18 @@ const DEFAULT_OPTIONS = {
   maxTextLength: 5000
 };
 
+const TYPING_MODES = {
+  field: "field",
+  tabKeystrokes: "tab-keystrokes"
+};
+
 const STORAGE_KEYS = {
   legacyText: "textToInsert",
   options: "options",
   selectedTemplateId: "selectedTemplateId",
   speed: "speed",
-  templates: "templates"
+  templates: "templates",
+  typingMode: "typingMode"
 };
 
 const DEFAULT_SETTINGS = {
@@ -16,13 +22,17 @@ const DEFAULT_SETTINGS = {
   [STORAGE_KEYS.options]: DEFAULT_OPTIONS,
   [STORAGE_KEYS.selectedTemplateId]: "",
   [STORAGE_KEYS.speed]: "medium",
-  [STORAGE_KEYS.templates]: []
+  [STORAGE_KEYS.templates]: [],
+  [STORAGE_KEYS.typingMode]: TYPING_MODES.field
 };
 
 const MESSAGE_TYPES = {
   checkTarget: "CHECK_TARGET",
+  checkKeystrokeTarget: "CHECK_KEYSTROKE_TARGET",
   startInsertion: "START_INSERTION",
-  stopInsertion: "STOP_INSERTION"
+  startKeystrokeTyping: "START_KEYSTROKE_TYPING",
+  stopInsertion: "STOP_INSERTION",
+  stopKeystrokeTyping: "STOP_KEYSTROKE_TYPING"
 };
 
 const form = document.getElementById("settingsForm");
@@ -31,6 +41,7 @@ const templateNameField = document.getElementById("templateName");
 const templateTextField = document.getElementById("templateText");
 const templateMeta = document.getElementById("templateMeta");
 const speedField = document.getElementById("speed");
+const typingModeField = document.getElementById("typingMode");
 const createTemplateButton = document.getElementById("createTemplateButton");
 const renameTemplateButton = document.getElementById("renameTemplateButton");
 const updateTemplateButton = document.getElementById("updateTemplateButton");
@@ -61,6 +72,18 @@ function normalizeOptions(rawOptions) {
   }
 
   return { maxTextLength };
+}
+
+function normalizeTypingMode(mode) {
+  if (mode === TYPING_MODES.tabKeystrokes) {
+    return TYPING_MODES.tabKeystrokes;
+  }
+
+  return TYPING_MODES.field;
+}
+
+function getTypingMode() {
+  return normalizeTypingMode(typingModeField.value);
 }
 
 function getMaxTextLength() {
@@ -194,7 +217,8 @@ function persistTemplateState(message, isError = false) {
       [STORAGE_KEYS.options]: options,
       [STORAGE_KEYS.selectedTemplateId]: selectedTemplateId,
       [STORAGE_KEYS.speed]: speedField.value,
-      [STORAGE_KEYS.templates]: templates
+      [STORAGE_KEYS.templates]: templates,
+      [STORAGE_KEYS.typingMode]: getTypingMode()
     },
     () => {
       const error = getRuntimeError();
@@ -250,6 +274,7 @@ function loadSettings() {
     const didMigrate = migrateLegacyText(settings[STORAGE_KEYS.legacyText]);
 
     speedField.value = settings[STORAGE_KEYS.speed];
+    typingModeField.value = normalizeTypingMode(settings[STORAGE_KEYS.typingMode]);
     renderTemplates();
 
     if (didMigrate) {
@@ -317,7 +342,10 @@ function saveCurrentChanges() {
   const template = getSelectedTemplate();
 
   if (!template) {
-    chrome.storage.local.set({ [STORAGE_KEYS.speed]: speedField.value }, () => {
+    chrome.storage.local.set({
+      [STORAGE_KEYS.speed]: speedField.value,
+      [STORAGE_KEYS.typingMode]: getTypingMode()
+    }, () => {
       const error = getRuntimeError();
 
       if (error) {
@@ -325,7 +353,7 @@ function saveCurrentChanges() {
         return;
       }
 
-      setStatus("Speed saved. Create a template before starting.");
+      setStatus("Typing settings saved. Create a template before starting.");
     });
     return;
   }
@@ -409,7 +437,35 @@ function sendMessageToActiveTab(message, onResponse) {
   });
 }
 
+function sendMessageToBackground(message, onResponse) {
+  chrome.runtime.sendMessage(message, (response) => {
+    const messageError = getRuntimeError();
+
+    onResponse(response, messageError);
+  });
+}
+
 function checkTarget() {
+  if (getTypingMode() === TYPING_MODES.tabKeystrokes) {
+    sendMessageToBackground(
+      { type: MESSAGE_TYPES.checkKeystrokeTarget },
+      (response, error) => {
+        if (error || !response || !response.ready) {
+          setStatus(
+            response && response.error
+              ? response.error
+              : "VDI mode needs a normal active browser tab.",
+            true
+          );
+          return;
+        }
+
+        setStatus("VDI mode ready: active tab can receive browser key events.");
+      }
+    );
+    return;
+  }
+
   sendMessageToActiveTab({ type: MESSAGE_TYPES.checkTarget }, (response, error) => {
     if (error || !response || !response.hasTarget) {
       showNoTargetStatus();
@@ -433,11 +489,38 @@ function startInsertion() {
     return;
   }
 
-  chrome.storage.local.set({ [STORAGE_KEYS.speed]: speedField.value }, () => {
+  chrome.storage.local.set({
+    [STORAGE_KEYS.speed]: speedField.value,
+    [STORAGE_KEYS.typingMode]: getTypingMode()
+  }, () => {
     const error = getRuntimeError();
 
     if (error) {
-      setStatus(`Could not save speed: ${error}`, true);
+      setStatus(`Could not save typing settings: ${error}`, true);
+      return;
+    }
+
+    if (getTypingMode() === TYPING_MODES.tabKeystrokes) {
+      sendMessageToBackground(
+        {
+          type: MESSAGE_TYPES.startKeystrokeTyping,
+          text: template.text,
+          speed: speedField.value
+        },
+        (response, messageError) => {
+          if (messageError || !response) {
+            setStatus("Could not start VDI typing.", true);
+            return;
+          }
+
+          if (!response.ok) {
+            setStatus(response.error || "Could not start VDI typing.", true);
+            return;
+          }
+
+          setStatus(`VDI typing started: ${template.name}`);
+        }
+      );
       return;
     }
 
@@ -465,6 +548,26 @@ function startInsertion() {
 }
 
 function stopInsertion() {
+  if (getTypingMode() === TYPING_MODES.tabKeystrokes) {
+    sendMessageToBackground(
+      { type: MESSAGE_TYPES.stopKeystrokeTyping },
+      (response, error) => {
+        if (error || !response) {
+          setStatus("No active VDI typing session found.");
+          return;
+        }
+
+        if (!response.stopped) {
+          setStatus("No VDI typing is running.");
+          return;
+        }
+
+        setStatus("VDI typing stopped.");
+      }
+    );
+    return;
+  }
+
   sendMessageToActiveTab({ type: MESSAGE_TYPES.stopInsertion }, (response, error) => {
     if (error || !response) {
       setStatus("No active insertion found on this page.");

@@ -5,6 +5,7 @@
   "description": "A visible, user-initiated personal productivity helper for saving text insertion settings.",
   "permissions": [
     "activeTab",
+    "debugger",
     "storage"
   ],
   "action": {

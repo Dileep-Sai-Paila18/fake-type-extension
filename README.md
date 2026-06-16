@@ -23,6 +23,14 @@ Chrome lets users review or change extension shortcuts at `chrome://extensions/s
 5. Use Rename, Update Text, or Delete to manage the selected template.
 6. Click into a page text field, then click Start or use the start shortcut.
 
+## Typing Modes
+
+- Page text field mode inserts text into normal web page fields, textareas, and contenteditable areas.
+- VDI / active tab mode sends browser key events to the active tab. Use it when a VDI web client is open in Chrome and focus is inside the remote app.
+- VDI mode uses Chrome's debugger permission only while typing, then detaches when typing finishes or is stopped.
+- VDI mode supports ASCII command text, including letters, numbers, punctuation, spaces, tabs, and newlines on a US-style keyboard layout.
+- A Chrome extension cannot type into a native Citrix, VMware, or RDP app outside Chrome without a separate native helper.
+
 ## Safety Notes
 
 This extension is intended as a personal productivity helper. It does not hide its activity, make network calls, collect page data, or bypass workplace auditing, monitoring, bot detection, CAPTCHAs, or other controls.
@@ -70,3 +78,11 @@ This extension is intended as a personal productivity helper. It does not hide i
 - Keeps the selected template saved between popup sessions.
 - Limits templates to 20 and text length to the configured maximum, defaulting to 5000 characters.
 - Start inserts the selected template text only.
+
+## Checkpoint 6
+
+- Adds a typing mode selector for page fields or VDI / active tab keystrokes.
+- Adds Chrome debugger permission for user-initiated VDI typing.
+- Sends VDI mode keystrokes from the background service worker with `Input.dispatchKeyEvent`.
+- Validates VDI mode text before typing so unsupported characters fail without partial insertion.
+- Detaches the debugger when VDI typing completes, stops, errors, or the tab closes.
