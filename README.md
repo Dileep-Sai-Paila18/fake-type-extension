@@ -29,6 +29,7 @@ Chrome lets users review or change extension shortcuts at `chrome://extensions/s
 - VDI / active tab mode sends browser key events to the active tab. Use it when a VDI web client is open in Chrome and focus is inside the remote app.
 - VDI mode uses Chrome's debugger permission only while typing, then detaches when typing finishes or is stopped.
 - VDI mode supports ASCII command text, including letters, numbers, punctuation, spaces, tabs, and newlines on a US-style keyboard layout.
+- VDI mode treats speed more conservatively than page text field mode. Use Slow for long commands with punctuation, and start after focus is already inside the remote app.
 - A Chrome extension cannot type into a native Citrix, VMware, or RDP app outside Chrome without a separate native helper.
 
 ## Safety Notes
@@ -86,3 +87,10 @@ This extension is intended as a personal productivity helper. It does not hide i
 - Sends VDI mode keystrokes from the background service worker with `Input.dispatchKeyEvent`.
 - Validates VDI mode text before typing so unsupported characters fail without partial insertion.
 - Detaches the debugger when VDI typing completes, stops, errors, or the tab closes.
+
+## Checkpoint 7
+
+- Retunes VDI mode with slower speed delays for remote-session reliability.
+- Adds a startup delay before the first VDI key to avoid missing the first character.
+- Adds a short key-hold delay between each VDI `keyDown` and `keyUp`.
+- Adds extra VDI pauses after punctuation, shifted characters, tabs, and newlines.

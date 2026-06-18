@@ -38,12 +38,18 @@ const MESSAGE_TYPES = {
 
 const DEBUGGER_PROTOCOL_VERSION = "1.3";
 
-const SPEED_DELAYS = {
-  slow: 120,
-  medium: 60,
-  fast: 25
+// VDI clients can drop or repeat keys when input arrives like a perfect machine.
+const VDI_SPEED_DELAYS = {
+  slow: 320,
+  medium: 220,
+  fast: 150
 };
 
+const VDI_FIRST_KEY_DELAY = 700;
+const VDI_KEY_HOLD_DELAY = 30;
+const VDI_CONTROL_KEY_EXTRA_DELAY = 150;
+const VDI_PUNCTUATION_EXTRA_DELAY = 80;
+const VDI_SHIFTED_KEY_EXTRA_DELAY = 90;
 const SHIFT_MODIFIER = 8;
 
 const LETTER_KEY_CODE_START = 65;
@@ -124,7 +130,7 @@ function normalizeTypingMode(mode) {
 }
 
 function getDelayForSpeed(speed) {
-  return SPEED_DELAYS[speed] || SPEED_DELAYS.medium;
+  return VDI_SPEED_DELAYS[speed] || VDI_SPEED_DELAYS.medium;
 }
 
 function getSelectedTemplate(settings) {
@@ -224,12 +230,21 @@ function normalizeKeystrokeText(text) {
   return String(text || "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
 }
 
-function createPrintableKeySpec(character, keyInfo, shifted, baseCharacter) {
+function createPrintableKeySpec(
+  character,
+  keyInfo,
+  shifted,
+  baseCharacter,
+  needsPunctuationPause = false
+) {
   return {
     code: keyInfo.code,
+    isControlKey: false,
     key: character,
     keyCode: keyInfo.keyCode,
     modifiers: shifted ? SHIFT_MODIFIER : 0,
+    needsPunctuationPause,
+    needsShiftPause: Boolean(shifted),
     text: character,
     unmodifiedText: baseCharacter || character
   };
@@ -238,9 +253,12 @@ function createPrintableKeySpec(character, keyInfo, shifted, baseCharacter) {
 function createControlKeySpec(key, code, keyCode) {
   return {
     code,
+    isControlKey: true,
     key,
     keyCode,
     modifiers: 0,
+    needsPunctuationPause: false,
+    needsShiftPause: false,
     text: "",
     unmodifiedText: ""
   };
@@ -291,7 +309,7 @@ function getKeySpecForCharacter(character) {
   if (SHIFTED_DIGIT_KEYS[character]) {
     const digit = SHIFTED_DIGIT_KEYS[character];
 
-    return createPrintableKeySpec(character, DIGIT_KEYS[digit], true, digit);
+    return createPrintableKeySpec(character, DIGIT_KEYS[digit], true, digit, true);
   }
 
   if (PUNCTUATION_KEYS[character]) {
@@ -301,7 +319,8 @@ function getKeySpecForCharacter(character) {
       character,
       keyInfo,
       Boolean(keyInfo.shifted),
-      keyInfo.baseCharacter
+      keyInfo.baseCharacter,
+      true
     );
   }
 
@@ -370,6 +389,12 @@ function sendDebuggerCommand(debuggee, method, params) {
   });
 }
 
+function wait(delay) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, delay);
+  });
+}
+
 function createDispatchParams(type, keySpec) {
   const params = {
     type,
@@ -398,11 +423,31 @@ async function dispatchKeySpec(debuggee, keySpec) {
     return keyDownError;
   }
 
+  await wait(VDI_KEY_HOLD_DELAY);
+
   return sendDebuggerCommand(
     debuggee,
     "Input.dispatchKeyEvent",
     createDispatchParams("keyUp", keySpec)
   );
+}
+
+function getDelayAfterKeySpec(baseDelay, keySpec) {
+  let delay = baseDelay;
+
+  if (keySpec.isControlKey) {
+    delay += VDI_CONTROL_KEY_EXTRA_DELAY;
+  }
+
+  if (keySpec.needsPunctuationPause) {
+    delay += VDI_PUNCTUATION_EXTRA_DELAY;
+  }
+
+  if (keySpec.needsShiftPause) {
+    delay += VDI_SHIFTED_KEY_EXTRA_DELAY;
+  }
+
+  return delay;
 }
 
 async function finishKeystrokeTyping() {
@@ -416,17 +461,25 @@ async function finishKeystrokeTyping() {
     clearTimeout(state.timerId);
   }
 
+  state.timerId = null;
+
+  // Let an in-flight keyDown complete its matching keyUp before detaching.
+  if (state.isDispatching) {
+    state.stopAfterDispatch = true;
+    return true;
+  }
+
   keystrokeState = null;
   await detachDebugger(state.debuggee);
 
   return true;
 }
 
-function scheduleNextKeystroke(state) {
+function scheduleNextKeystroke(state, delay) {
   state.timerId = setTimeout(() => {
     state.timerId = null;
     typeNextKeystroke(state);
-  }, state.delay);
+  }, delay);
 }
 
 async function typeNextKeystroke(state) {
@@ -439,13 +492,17 @@ async function typeNextKeystroke(state) {
     return;
   }
 
-  const error = await dispatchKeySpec(state.debuggee, state.keySpecs[state.index]);
+  const keySpec = state.keySpecs[state.index];
+
+  state.isDispatching = true;
+  const error = await dispatchKeySpec(state.debuggee, keySpec);
+  state.isDispatching = false;
 
   if (keystrokeState !== state) {
     return;
   }
 
-  if (error) {
+  if (error || state.stopAfterDispatch) {
     await finishKeystrokeTyping();
     return;
   }
@@ -457,7 +514,7 @@ async function typeNextKeystroke(state) {
     return;
   }
 
-  scheduleNextKeystroke(state);
+  scheduleNextKeystroke(state, getDelayAfterKeySpec(state.baseDelay, keySpec));
 }
 
 async function startKeystrokeTypingOnTab(tab, text, speed) {
@@ -498,15 +555,17 @@ async function startKeystrokeTypingOnTab(tab, text, speed) {
   }
 
   keystrokeState = {
+    baseDelay: getDelayForSpeed(speed),
     debuggee,
-    delay: getDelayForSpeed(speed),
     index: 0,
+    isDispatching: false,
     keySpecs: keySpecResult.keySpecs,
+    stopAfterDispatch: false,
     tabId: tab.id,
     timerId: null
   };
 
-  typeNextKeystroke(keystrokeState);
+  scheduleNextKeystroke(keystrokeState, VDI_FIRST_KEY_DELAY);
 
   return { ok: true };
 }
